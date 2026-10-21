@@ -27,8 +27,11 @@ jobs:
           Invoke-WebRequest https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip -OutFile pluginval.zip
           Expand-Archive pluginval.zip pluginval
           $validator = Get-ChildItem pluginval -Filter pluginval.exe -Recurse | Select-Object -First 1
-          & $validator.FullName --strictness-level 5 --validate "$pwd/build-windows/CobaltDualFilter_artefacts/Release/VST3/DUALFAT.vst3"
-          if ($LASTEXITCODE -ne 0) { throw "VST3 validation failed" }
+          $plugin = Join-Path $pwd 'build-windows/CobaltDualFilter_artefacts/Release/VST3/DUALFAT.vst3'
+          $validation = Start-Process -FilePath $validator.FullName -ArgumentList "--strictness-level 5 --validate `"$plugin`"" -Wait -PassThru -RedirectStandardOutput pluginval-out.log -RedirectStandardError pluginval-error.log
+          Get-Content pluginval-out.log
+          Get-Content pluginval-error.log
+          if ($validation.ExitCode -ne 0) { throw "VST3 validation failed with exit code $($validation.ExitCode)" }
       - name: Test installer and uninstaller
         shell: pwsh
         run: |
