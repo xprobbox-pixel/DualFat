@@ -1,0 +1,44 @@
+name: Build installers
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  mac:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build universal Mac plugins
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+      - run: cmake --build build --config Release --parallel 3
+      - run: ctest --test-dir build -C Release --output-on-failure
+      - run: bash installer/package-macos.sh build/CobaltDualFilter_artefacts/Release dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DUALFAT-macOS-installer
+          path: dist/*.pkg
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build, test and package Windows x64
+        shell: pwsh
+        run: ./scripts/build-windows.ps1
+      - name: Validate Windows VST3
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip -OutFile pluginval.zip
+          Expand-Archive pluginval.zip pluginval
+          $validator = Get-ChildItem pluginval -Filter pluginval.exe -Recurse | Select-Object -First 1
+          & $validator.FullName --strictness-level 5 --validate "$pwd/build-windows/CobaltDualFilter_artefacts/Release/VST3/DUALFAT.vst3"
+          if ($LASTEXITCODE -ne 0) { throw "VST3 validation failed" }
+      - name: Test installer and uninstaller
+        shell: pwsh
+        run: |
+          $setup = Start-Process -FilePath ./dist/DUALFAT-1.2.0-Windows-x64-Setup.exe -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait -PassThru
+          if ($setup.ExitCode -ne 0) { throw "Installer failed" }
+          if (!(Test-Path 'C:\Program Files\Common Files\VST3\DUALFAT.vst3\Contents\x86_64-win\DUALFAT.vst3')) { throw "VST3 missing" }
+          if (!(Test-Path 'C:\Program Files\DUALFAT\DUALFAT.exe')) { throw "Standalone missing" }
+          $uninstall = Start-Process -FilePath 'C:\Program Files\DUALFAT\unins000.exe' -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) { throw "Uninstall failed" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DUALFAT-Windows-installer
+          path: dist/*.exe
