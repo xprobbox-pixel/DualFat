@@ -6,13 +6,11 @@ This release embeds the supplied cyan/violet DUALFAT logo in the native plugin h
 
 - **Mac:** `installer/package-macos.sh <Release-artifacts-directory> <destination>` creates a native `.pkg` for the architectures in the build. It installs AU/VST3 into the current user's `~/Library/Audio/Plug-Ins` and standalone into `~/Applications`. Quit your DAW before installation, then restart and rescan. Requires macOS 11 or later. Binaries are ad-hoc signed; the installer is not Developer ID signed or notarized.
 - **Windows:** run `powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1` on Windows with Visual Studio 2022 C++ Desktop tools, CMake, Git and Inno Setup 6. It compiles x64 VST3 and standalone, runs DSP tests, and creates `dist/DUALFAT-1.2.0-Windows-x64-Setup.exe`. The installer uses the standard Common Files/VST3 directory and Program Files/DUALFAT, and provides an uninstaller. The C++ runtime is statically linked. Windows 10 or later; AU is Mac-only.
-- **CI:** `.github/workflows/build.yml` builds both installers, validates Windows VST3 with pluginval and tests the Windows installer/uninstaller. Upload this project as the repository root and run **Build installers** under Actions. This workflow has been prepared but has not been run in this local Mac-only environment.
+- **CI:** `.github/workflows/build.yml` builds both installers, validates Windows VST3 with pluginval and tests the Windows installer/uninstaller. Upload this project as the repository root and run **Build installers** under Actions. Builds run on GitHub-hosted macOS and Windows runners.
 
-No Windows executable is included in the local source package until a Windows runner has compiled and validated it. The Mac package is a built native installer, not a source archive.
+Installers are published as workflow artifacts on successful builds. Source archives contain the project and installer recipes; compiled installers are separate downloads.
 
-## Original build and plugin documentation
-
-# DUALFAT 1.1.0
+## Plugin overview
 
 Native JUCE/C++ audio effect targeting VST3, macOS Audio Unit (AUv2), and Standalone.
 The interface is drawn entirely with JUCE; every audio control is an APVTS parameter. Version 1.1.0 introduces the DUALFAT name, a darker neumorphic theme, sculpted metallic controls, dial-reactive LED rings, and embedded Roboto Regular/Bold. The DSP, host parameter IDs, VST3 class IDs, and AU identity are preserved from the working Cobalt Dual Filter version. The internal CMake target remains `CobaltDualFilter` for continuity.
