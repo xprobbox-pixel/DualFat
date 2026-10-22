@@ -741,6 +741,7 @@ void CobaltContent::updateScale(float scale)
 CobaltEditor::CobaltEditor(CobaltProcessor &p)
     : AudioProcessorEditor(p), processor(p), content(p)
 {
+    const int width = juce::jlimit(560, 1680, processor.editorWidth.load());
     addAndMakeVisible(content);
     setResizable(true, true);
     setResizeLimits(560, 494, 1680, 1482);
@@ -749,7 +750,6 @@ CobaltEditor::CobaltEditor(CobaltProcessor &p)
     {
         setSize(juce::roundToInt(1120.0f * scale), juce::roundToInt(988.0f * scale));
     };
-    const int width = juce::jlimit(560, 1680, processor.editorWidth.load());
     setSize(width, juce::roundToInt(float(width) * 988.0f / 1120.0f));
 }
 
