@@ -1,11 +1,13 @@
-# DUALFAT 1.2.0
+# DUALFAT 1.2.1
 
-This release embeds the supplied cyan/violet DUALFAT logo in the native plugin header. The audio engine, automation IDs and plugin identity are unchanged from 1.1.0.
+Version 1.2.1 fixes DAW resizing: the entire interface scales from 50% to 150%, opens at 75%, and includes a UI SIZE menu. The last size is remembered while the processor instance remains loaded.
+
+Version 1.2 embeds the supplied cyan/violet DUALFAT logo in the native plugin header. The audio engine, automation IDs and plugin identity are unchanged from 1.1.0.
 
 ## Installers
 
 - **Mac:** `installer/package-macos.sh <Release-artifacts-directory> <destination>` creates a native `.pkg` for the architectures in the build. It installs AU/VST3 into the current user's `~/Library/Audio/Plug-Ins` and standalone into `~/Applications`. Quit your DAW before installation, then restart and rescan. Requires macOS 11 or later. Binaries are ad-hoc signed; the installer is not Developer ID signed or notarized.
-- **Windows:** run `powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1` on Windows with Visual Studio 2022 C++ Desktop tools, CMake, Git and Inno Setup 6. It compiles x64 VST3 and standalone, runs DSP tests, and creates `dist/DUALFAT-1.2.0-Windows-x64-Setup.exe`. The installer uses the standard Common Files/VST3 directory and Program Files/DUALFAT, and provides an uninstaller. The C++ runtime is statically linked. Windows 10 or later; AU is Mac-only.
+- **Windows:** run `powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1` on Windows with Visual Studio 2022 C++ Desktop tools, CMake, Git and Inno Setup 6. It compiles x64 VST3 and standalone, runs DSP tests, and creates `dist/DUALFAT-1.2.1-Windows-x64-Setup.exe`. The installer uses the standard Common Files/VST3 directory and Program Files/DUALFAT, and provides an uninstaller. The C++ runtime is statically linked. Windows 10 or later; AU is Mac-only.
 - **CI:** `.github/workflows/build.yml` builds both installers, validates Windows VST3 with pluginval and tests the Windows installer/uninstaller. Upload this project as the repository root and run **Build installers** under Actions. Builds run on GitHub-hosted macOS and Windows runners.
 
 Installers are published as workflow artifacts on successful builds. Source archives contain the project and installer recipes; compiled installers are separate downloads.

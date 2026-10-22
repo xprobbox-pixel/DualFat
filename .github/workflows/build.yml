@@ -13,7 +13,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: DUALFAT-macOS-installer
-          path: dist/*.pkg
+          path: |
+            dist/*.pkg
+            dist/README.txt
   windows:
     runs-on: windows-2022
     steps:
@@ -35,7 +37,7 @@ jobs:
       - name: Test installer and uninstaller
         shell: pwsh
         run: |
-          $setup = Start-Process -FilePath ./dist/DUALFAT-1.2.0-Windows-x64-Setup.exe -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait -PassThru
+          $setup = Start-Process -FilePath ./dist/DUALFAT-1.2.1-Windows-x64-Setup.exe -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Wait -PassThru
           if ($setup.ExitCode -ne 0) { throw "Installer failed" }
           if (!(Test-Path 'C:\Program Files\Common Files\VST3\DUALFAT.vst3\Contents\x86_64-win\DUALFAT.vst3')) { throw "VST3 missing" }
           if (!(Test-Path 'C:\Program Files\DUALFAT\DUALFAT.exe')) { throw "Standalone missing" }
@@ -44,4 +46,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: DUALFAT-Windows-installer
-          path: dist/*.exe
+          path: |
+            dist/*.exe
+            dist/README.txt

@@ -589,8 +589,8 @@ void ResponseGraph::mouseUp(const juce::MouseEvent &)
         processor.state.getParameter(selected ? "lp_cutoff" : "hp_cutoff")->endChangeGesture();
     selected = -1;
 }
-CobaltEditor::CobaltEditor(CobaltProcessor &p)
-    : AudioProcessorEditor(p), processor(p), graph(p), hp(p, 0), lp(p, 1)
+CobaltContent::CobaltContent(CobaltProcessor &p)
+    : processor(p), graph(p), hp(p, 0), lp(p, 1)
 {
     brandLogo = juce::ImageCache::getFromMemory(DualfatFonts::DUALFATlogo_png,
                                                DualfatFonts::DUALFATlogo_pngSize)
@@ -598,7 +598,7 @@ CobaltEditor::CobaltEditor(CobaltProcessor &p)
     setLookAndFeel(&look);
     for (auto *c : std::initializer_list<juce::Component *>{&graph, &hp, &lp, &input, &output, &mix,
                                                             &inputLabel, &outputLabel, &mixLabel,
-                                                            &bypass, &save, &load})
+                                                            &bypass, &save, &load, &uiSize})
         addAndMakeVisible(c);
     for (auto *s : {&input, &output, &mix})
     {
@@ -639,17 +639,24 @@ CobaltEditor::CobaltEditor(CobaltProcessor &p)
     mix.updateText();
     save.onClick = [this] { preset(true); };
     load.onClick = [this] { preset(false); };
-    setResizable(true, true);
-    setResizeLimits(1000, 896, 1440, 1236);
+    uiSize.setName("UI size");
+    uiSize.setTooltip("Resize the entire interface, or drag the bottom-right corner");
+    for (int percent : {50, 60, 75, 85, 100, 125, 150})
+        uiSize.addItem("UI SIZE  " + juce::String(percent) + " %", percent);
+    uiSize.onChange = [this]
+    {
+        if (onScaleChange && uiSize.getSelectedId() > 0)
+            onScaleChange(float(uiSize.getSelectedId()) / 100.0f);
+    };
     setSize(1120, 988);
     startTimerHz(30);
 }
-CobaltEditor::~CobaltEditor()
+CobaltContent::~CobaltContent()
 {
     stopTimer();
     setLookAndFeel(nullptr);
 }
-void CobaltEditor::paint(juce::Graphics &g)
+void CobaltContent::paint(juce::Graphics &g)
 {
     auto r = getLocalBounds().toFloat();
     g.setGradientFill(juce::ColourGradient(juce::Colour(0xff151920), r.getTopLeft(), bg,
@@ -669,9 +676,10 @@ void CobaltEditor::paint(juce::Graphics &g)
     auto footer = juce::Rectangle<float>(22, float(getHeight() - 73), float(getWidth() - 44), 56);
     well(g, footer, 9);
 }
-void CobaltEditor::resized()
+void CobaltContent::resized()
 {
     int w = getWidth(), h = getHeight();
+    uiSize.setBounds(w / 2 - 80, 64, 160, 28);
     save.setBounds(w - 357, 25, 88, 30);
     load.setBounds(w - 259, 25, 88, 30);
     bypass.setBounds(w - 147, 28, 124, 25);
@@ -687,22 +695,22 @@ void CobaltEditor::resized()
     output.setBounds(34 + third + 8, h - 49, third - 10, 24);
     mix.setBounds(34 + (third + 8) * 2, h - 49, third - 10, 24);
 }
-void CobaltEditor::timerCallback()
+void CobaltContent::timerCallback()
 {
     hp.animate();
     lp.animate();
     graph.repaint();
     hp.repaint();
     lp.repaint();
-    repaint(0, 0, getWidth(), 70);
+    repaint(0, 0, getWidth(), 100);
 }
-void CobaltEditor::preset(bool saving)
+void CobaltContent::preset(bool saving)
 {
     chooser = std::make_unique<juce::FileChooser>(
         saving ? "Save DUALFAT preset" : "Load DUALFAT preset",
         juce::File::getSpecialLocation(juce::File::userDocumentsDirectory),
         saving ? "*.dualfat" : "*.dualfat;*.cobalt");
-    juce::Component::SafePointer<CobaltEditor> safe(this);
+    juce::Component::SafePointer<CobaltContent> safe(this);
     chooser->launchAsync(
         saving
             ? (juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles |
@@ -722,4 +730,40 @@ void CobaltEditor::preset(bool saving)
                     juce::MessageBoxIconType::WarningIcon, "Preset error",
                     "Could not read or write this DUALFAT preset.");
         });
+}
+
+void CobaltContent::updateScale(float scale)
+{
+    uiSize.setText("UI SIZE  " + juce::String(juce::roundToInt(scale * 100.0f)) + " %",
+                   juce::dontSendNotification);
+}
+
+CobaltEditor::CobaltEditor(CobaltProcessor &p)
+    : AudioProcessorEditor(p), processor(p), content(p)
+{
+    addAndMakeVisible(content);
+    setResizable(true, true);
+    setResizeLimits(560, 494, 1680, 1482);
+    getConstrainer()->setFixedAspectRatio(1120.0 / 988.0);
+    content.onScaleChange = [this](float scale)
+    {
+        setSize(juce::roundToInt(1120.0f * scale), juce::roundToInt(988.0f * scale));
+    };
+    const int width = juce::jlimit(560, 1680, processor.editorWidth.load());
+    setSize(width, juce::roundToInt(float(width) * 988.0f / 1120.0f));
+}
+
+void CobaltEditor::resized()
+{
+    const float scale = std::min(float(getWidth()) / 1120.0f, float(getHeight()) / 988.0f);
+    const float x = (float(getWidth()) - 1120.0f * scale) * 0.5f;
+    const float y = (float(getHeight()) - 988.0f * scale) * 0.5f;
+    content.setTransform(juce::AffineTransform::scale(scale).translated(x, y));
+    content.updateScale(scale);
+    processor.editorWidth.store(juce::jlimit(560, 1680, getWidth()));
+}
+
+void CobaltEditor::paint(juce::Graphics &g)
+{
+    g.fillAll(bg);
 }

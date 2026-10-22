@@ -66,16 +66,19 @@ class ResponseGraph : public juce::Component
     float xFor(double) const;
     float yFor(double) const;
 };
-class CobaltEditor : public juce::AudioProcessorEditor, private juce::Timer
+class CobaltContent : public juce::Component, private juce::Timer
 {
   public:
-    explicit CobaltEditor(CobaltProcessor &);
-    ~CobaltEditor() override;
+    explicit CobaltContent(CobaltProcessor &);
+    ~CobaltContent() override;
     void paint(juce::Graphics &) override;
     void resized() override;
+    void updateScale(float);
+    std::function<void(float)> onScaleChange;
 
   private:
     CobaltProcessor &processor;
+    juce::ComboBox uiSize;
     CobaltLook look;
     juce::Image brandLogo;
     juce::TooltipWindow tooltips{this, 700};
@@ -90,4 +93,18 @@ class CobaltEditor : public juce::AudioProcessorEditor, private juce::Timer
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> ba;
     void timerCallback() override;
     void preset(bool);
+};
+
+// Keep the design in a fixed coordinate space so text, hit targets and all
+// controls scale together instead of clipping when the host window shrinks.
+class CobaltEditor : public juce::AudioProcessorEditor
+{
+  public:
+    explicit CobaltEditor(CobaltProcessor &);
+    void resized() override;
+    void paint(juce::Graphics &) override;
+
+  private:
+    CobaltProcessor &processor;
+    CobaltContent content;
 };

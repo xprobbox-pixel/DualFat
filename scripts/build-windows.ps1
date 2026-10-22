@@ -14,3 +14,5 @@ if (!(Test-Path $InnoCompiler)) { throw "Install Inno Setup 6, or supply -InnoCo
 New-Item -ItemType Directory -Force $dist | Out-Null
 & $InnoCompiler "/DBuildRoot=$build\CobaltDualFilter_artefacts\Release" "/DOutputRoot=$dist" "$project\installer\DUALFAT.iss"
 Check-Exit
+
+Copy-Item "$project\README.txt" "$dist\README.txt"

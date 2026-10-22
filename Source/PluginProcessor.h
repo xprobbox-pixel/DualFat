@@ -63,6 +63,7 @@ class CobaltProcessor : public juce::AudioProcessor
     }
     bool savePreset(const juce::File &);
     bool loadPreset(const juce::File &);
+    std::atomic<int> editorWidth{840};
     std::atomic<float> liveCutoff[2]{{120}, {8400}};
     std::atomic<double> livePhase[2]{{0}, {0}};
     std::atomic<double> liveRate{44100};
